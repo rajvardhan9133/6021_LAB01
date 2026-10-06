@@ -7,7 +7,7 @@ import sys
 # Allow helpers package to be found when this module is imported standalone
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from helpers.dataloader import load_image, get_data_path
-from scipy.signal import convolve2d
+from scipy.ndimage import convolve1d
 
 SPHINX_IMAGE = "2560px-Great_Sphinx_of_Giza_-_20080716a.jpg"
 
@@ -48,11 +48,10 @@ class GaussianFilt:
             conv_img (ndarray): Blurred image of same shape, dtype uint8.
         """
         '''raise NotImplementedError("Implement this method")'''
-        gauss_1d = self.gauss_kernel()
-        pad_size = gauss_1d.shape[0] // 2
-        padded_image = np.pad(image, pad_size, mode="symmetric")
-        vertical = convolve2d(padded_image, gauss_1d, mode="valid")
-        horizontal = convolve2d(vertical, gauss_1d.T, mode="valid")
+        gauss_1d=self.gauss_kernel()
+        kernel = gauss_1d.squeeze()
+        vertical=convolve1d(image,kernel, axis=0, mode="reflect")
+        horizontal = convolve1d(vertical, kernel, axis=1, mode="reflect")
         con_image = np.clip(horizontal, 0, 255).astype(np.uint8)
         return con_image
         
