@@ -7,6 +7,7 @@ import sys
 # Allow helpers package to be found when this module is imported standalone
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from helpers.dataloader import load_image, get_data_path
+from scipy.signal import convolve2d
 
 SPHINX_IMAGE = "2560px-Great_Sphinx_of_Giza_-_20080716a.jpg"
 
@@ -28,8 +29,15 @@ class GaussianFilt:
             gauss_1d (ndarray): Shape (k_size, 1) — column vector kernel.
         """
         # Work out the necessary kernel size and range to generate the Gaussian over.
-        raise NotImplementedError("Implement this method")
-
+        '''raise NotImplementedError("Implement this method")'''
+        k_size = int(6 * self.sigma + 1)
+        half = k_size // 2
+        x = np.arange(-half, half + 1)
+        gauss_1d = (1.0 / (self.sigma * np.sqrt(2 * np.pi))) * np.exp(-(x ** 2) / (2 * self.sigma ** 2))
+        gauss_1d = gauss_1d / gauss_1d.sum()
+        gauss_1d = np.expand_dims(gauss_1d, axis=1)
+        return gauss_1d
+    
     def my_conv_method(self, image):
         """Perform separable 2D Gaussian convolution via two 1D matrix-multiply passes.
 
@@ -39,4 +47,12 @@ class GaussianFilt:
         Returns:
             conv_img (ndarray): Blurred image of same shape, dtype uint8.
         """
-        raise NotImplementedError("Implement this method")
+        '''raise NotImplementedError("Implement this method")'''
+        gauss_1d = self.gauss_kernel()
+        pad_size = gauss_1d.shape[0] // 2
+        padded_image = np.pad(image, pad_size, mode="symmetric")
+        vertical = convolve2d(padded_image, gauss_1d, mode="valid")
+        horizontal = convolve2d(vertical, gauss_1d.T, mode="valid")
+        con_image = np.clip(horizontal, 0, 255).astype(np.uint8)
+        return con_image
+        
